@@ -1,39 +1,50 @@
 import * as svb from '@svb-41/core'
 
-type Data = { target?: svb.ship.Position }
+type Data = { initialPos?: svb.ship.Position }
 
 export const data: Data = {}
-export const speedPercentage = 0.5
-export let hasFoundAnEnemy = false
-export const ai: svb.AI<Data> = ({ stats, comm, radar, ship }) => {
+export const ai: svb.AI<Data> = ({ stats, comm, radar, ship, memory }) => {
   if (radar.length > 0) {
-    const enemies = radar
-      .filter(
-        (detectedShip) =>
-          detectedShip.team !== stats.team && !detectedShip.destroyed,
-      )
-      .map((detectedShip) => detectedShip.position)
-    if (enemies.length > 0) {
-      comm.sendMessage(enemies)
-      hasFoundAnEnemy = true
-      return ship.thrust(-1)
+    const near = svb.radar.nearestEnemy(radar, stats.team, stats.position)
+    if (near) {
+      const source = stats.position
+      const target = near.enemy.position
+      const threshold = 4 / Math.sqrt(near.dist2)
+      const speed = stats.weapons[0]?.bullet.position.speed
+      const delay = Math.sqrt(near.dist2) / speed
+      const resAim = svb.geometry.aim({
+        ship,
+        source,
+        target,
+        threshold,
+        delay,
+        weapon: 0,
+      })
+      if (resAim.id === svb.Instruction.FIRE) return ship.fire()
+      return resAim
+    } else {
+      return ship.thrust(0.1 - stats.position.speed)
+    }
+  } else {
+    const messages = comm.messagesSince(0)
+    if (messages.length > 0) {
+      const source = stats.position
+      const target = messages[0].content
+      const threshold = 4 / Math.sqrt(target)
+      const speed = stats.weapons[0]?.bullet.position.speed
+      const delay = Math.sqrt(target) / speed
+      const resAim = svb.geometry.aim({
+        ship,
+        source,
+        target,
+        threshold,
+        delay,
+        weapon: 0,
+      })
+      if (resAim.id === svb.Instruction.FIRE) return ship.fire()
+      return resAim
+    } else {
+      return ship.thrust(0.1 - stats.position.speed)
     }
   }
-
-  const { speed } = stats.position
-  if (speed < speedPercentage && !hasFoundAnEnemy) {
-    return ship.thrust(speedPercentage - speed)
-  }
-  if (speed - speedPercentage >= 0.01) {
-    return ship.thrust(speed - speedPercentage)
-  }
-  return ship.idle()
 }
-/*
-  const messages = comm.messagesSince(0)
-  
-  if (messages && messages.length > 0) {
-      const target = messages[0].content.message
-      svb.console.log('received ', target)
-  }
-*/
