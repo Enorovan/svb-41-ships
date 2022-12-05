@@ -1,7 +1,5 @@
 import * as svb from '@svb-41/core'
 
-type Data = { x: number, y: number }
-
 export let hasTurned = false
 export const data: svb.ship.Position = {
   pos: {
@@ -11,13 +9,7 @@ export const data: svb.ship.Position = {
   direction: 0,
   speed: 0,
 }
-export const ai: svb.AI<svb.ship.Position> = ({
-  stats,
-  radar,
-  ship,
-  comm,
-  memory,
-}) => {
+export const ai: svb.AI<svb.ship.Position> = ({ stats, radar, ship, comm }) => {
   if (radar.length > 0) {
     const near = svb.radar.nearestEnemy(radar, stats.team, stats.position)
     if (near) {
