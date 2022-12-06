@@ -1,4 +1,8 @@
 # svb-41-ships
+# Membres du groupe : 
+  - ELABBASSI Nisrine
+  - MEHIDI Lisa
+  - NAVARRO Erwan
 # Projet :  
 Le projet décrit l'implémentation un algorithme en swarm utilisant des grafcets et une machine à états.
 
