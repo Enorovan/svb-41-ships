@@ -3,11 +3,9 @@ import * as svb from '@svb-41/core'
 type Data = {
   pos?: svb.ship.Position,
   target?: svb.ship.Position,
-  sourceSave?: svb.ship.Position,
-  turnOnce?: boolean,
 }
 
-export const data: Data = { turnOnce: true }
+export const data: Data = {}
 export const ai: svb.AI<Data> = ({ stats, radar, ship, memory, comm }) => {
   const near = svb.radar.nearestEnemy(radar, stats.team, stats.position)
 
@@ -17,6 +15,7 @@ export const ai: svb.AI<Data> = ({ stats, radar, ship, memory, comm }) => {
   const source = stats.position
 
   if (near) {
+    comm.sendMessage(near.enemy.position)
     const target = near.enemy.position
     return svb.geometry.aim({ ship, source, target, threshold: 0.01 })
   } else if (memory.target) {

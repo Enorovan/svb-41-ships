@@ -8,10 +8,9 @@ export const ai: svb.AI<Data> = ({ stats, comm, radar, ship }) => {
     const near = svb.radar.nearestEnemy(radar, stats.team, stats.position)
     if (near) {
       comm.sendMessage(near.enemy.position)
-      svb.console.log(near.enemy.position.pos)
       if (stats.position.speed > -0.1) return ship.thrust(-0.1)
     }
   }
-  if (stats.position.speed < 0.1) return ship.thrust(0.1 - stats.position.speed)
+  if (stats.position.speed < 0.4) return ship.thrust(0.4 - stats.position.speed)
   return ship.idle()
 }

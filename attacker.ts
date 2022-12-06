@@ -1,50 +1,37 @@
 import * as svb from '@svb-41/core'
 
-type Data = { initialPos?: svb.ship.Position }
+type Data = {
+  pos?: svb.ship.Position,
+  target?: svb.ship.Position,
+}
 
 export const data: Data = {}
-export const ai: svb.AI<Data> = ({ stats, comm, radar, ship, memory }) => {
+export const ai: svb.AI<Data> = ({ stats, radar, ship, memory, comm }) => {
+  const source = stats.position
+  const messages = comm.messagesSince(0)
   if (radar.length > 0) {
     const near = svb.radar.nearestEnemy(radar, stats.team, stats.position)
     if (near) {
-      const source = stats.position
+      comm.sendMessage(near.enemy.position)
       const target = near.enemy.position
-      const threshold = 4 / Math.sqrt(near.dist2)
-      const speed = stats.weapons[0]?.bullet.position.speed
-      const delay = Math.sqrt(near.dist2) / speed
-      const resAim = svb.geometry.aim({
-        ship,
-        source,
-        target,
-        threshold,
-        delay,
-        weapon: 0,
-      })
-      if (resAim.id === svb.Instruction.FIRE) return ship.fire()
-      return resAim
-    } else {
-      return ship.thrust(0.1 - stats.position.speed)
+      return svb.geometry.aim({ ship, source, target, threshold: 0.01 })
     }
   } else {
-    const messages = comm.messagesSince(0)
-    if (messages.length > 0) {
-      const source = stats.position
-      const target = messages[0].content
-      const threshold = 4 / Math.sqrt(target)
-      const speed = stats.weapons[0]?.bullet.position.speed
-      const delay = Math.sqrt(target) / speed
-      const resAim = svb.geometry.aim({
-        ship,
-        source,
-        target,
-        threshold,
-        delay,
-        weapon: 0,
-      })
-      if (resAim.id === svb.Instruction.FIRE) return ship.fire()
-      return resAim
-    } else {
-      return ship.thrust(0.1 - stats.position.speed)
-    }
+    return ship.thrust(0.1 - stats.position.speed)
   }
+  if (messages) {
+    memory.target = messages[0].content.message
+  }
+  if (memory.target) {
+    const targetToAim = memory.target
+    return svb.geometry.aim({
+      ship,
+      source,
+      target: targetToAim,
+      threshold: 0.01,
+    })
+  }
+  if (Math.abs(stats.position.direction - memory.pos.direction) > 0.1)
+    return ship.turn(stats.position.direction - memory.pos.direction)
+  return ship.idle()
 }
