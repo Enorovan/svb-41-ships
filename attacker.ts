@@ -1,10 +1,8 @@
 import * as svb from '@svb-41/core'
-
 type Data = {
   pos?: svb.ship.Position,
   target?: svb.ship.Position,
 }
-
 export const data: Data = {}
 export const ai: svb.AI<Data> = ({ stats, radar, ship, memory, comm }) => {
   const source = stats.position
